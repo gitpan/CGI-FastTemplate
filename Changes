@@ -1,5 +1,16 @@
 Revision history for Perl extension CGI::FastTemplate.
 
+1.04  Thu Oct 29 09:57:15 EST 1998
+	- strict() now leaves unknown variables in the final doc instead of
+	converting them to an empty string.  see: no_strict() to get the old 
+	behavior back.
+
+
+1.03  Thu Oct 15 10:42:14 EDT 1998
+	- minor change to prevent spurious warnings under -w (e.g. {strict} 
+	becomes {"strict"})
+
+
 1.02  Tue Sep 22 08:57:29 EDT 1998
 
 	- fixed bug that allowed first character after '$' to be a digit.

@@ -30,8 +30,6 @@
 ##
 ##
 ## TODO:
-##     - update 'Changes' 
-##     - update pod doco
 ## 
 ##################################################
 
@@ -39,7 +37,7 @@ package CGI::FastTemplate;
 
 use strict;
 
-$CGI::FastTemplate::VERSION	= '1.02';
+$CGI::FastTemplate::VERSION	= '1.04';
 $CGI::FastTemplate::ROOT	= undef; 
 
 ##################################################
@@ -55,7 +53,7 @@ sub new
 
 	$self->init;
 
-	$self->{strict}	= 1;
+	$self->{"strict"}	= 1;
 
 	if (defined($root))
 	{
@@ -70,7 +68,7 @@ sub strict
 ##
 {
 	my($self) = shift;
-	$self->{strict} = 1;
+	$self->{"strict"} = 1;
 }
 
 ##################################################
@@ -79,7 +77,7 @@ sub no_strict
 ##
 {
 	my($self) = shift;
-	undef $self->{strict};
+	undef $self->{"strict"};
 }
 
 ##################################################
@@ -338,9 +336,15 @@ sub parse
 				}
 				if (!defined($v))		## $v should be empty not undef, to prevent
 				{				## warnings under -w
-					print STDERR "[CGI::FastTemplate] Warning: no value found for variable: $1\n" 
-						if ($self->{strict});
-					$v = "";
+					if ($self->{"strict"})
+					{
+						print STDERR "[CGI::FastTemplate] Warning: no value found for variable: $1\n";
+						$v = '$' . $1;		## keep original variable name in output
+					}
+					else
+					{
+						$v = "";		## remove variable name
+					}
 				}	
 				$v;
 				/ge;
@@ -741,14 +745,26 @@ have a warning printed to STDERR.  e.g.
 
 	[CGI::FastTemplate] Warning: no value found for variable: SOME_VARIABLE
 
-Note: STDERR output should be captured and logged by the webserver.  e.g. With apache you can tail the error log 
-during development to see the results. e.g. 
+Also, new as of version 1.04 the variables will be left in the output
+document.  This was done for two reasons: to allow for parsing to be done
+in stages (i.e. multiple passes), and to make it easier to identify
+undefined variables since they appear in the parsed output.
+If you have been using an earlier version of FastTemplate and you want
+the old behavior of replacing unknown variables with an empty string,
+see: no_strict().
+
+Note: STDERR output should be captured and logged by the webserver.
+e.g. With apache (and unix!) you can tail the error log during development
+to see the results. e.g.
 
 	tail -f /etc/httpd/logs/error_log
 
 =head2 no_strict()
 
-Turns off warning messages about unresolved template variables.  This must be set for each instance of CGI::FastTemplate. e.g.
+Turns off warning messages about unresolved template variables.
+As of version 1.04 a call to no_strict() is required to replace unknown variables with an
+empty string.  By default, all instances of FastTemplate behave as is strict() was called.
+Also, no_strict() must be set for each instance of CGI::FastTemplate. e.g.
 
 	CGI::FastTemplate->no_strict;		## no 
 	
