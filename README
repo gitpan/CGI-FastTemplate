@@ -1,7 +1,7 @@
 
-README for the Perl Module CGI::FastTemplate - 1.07
+README for the Perl Module CGI::FastTemplate - 1.09
 
-	Copyright (c) 1998 Jason Moore <jmoore@sober.com>.  All rights
+	Copyright (c) 1998-1999 Jason Moore <jmoore@sober.com>.  All rights
 	reserved.
 
 	This program is free software; you can redistribute it and/or
@@ -26,34 +26,38 @@ For example using FastTemplate it is possible to:
 	- build multilingual applications
 
 	- allow users to select high-bandwidth or text-only versions of
-	an application
+	  an application
 
 	- let graphic designers work on templates independantly of
-	the programmers
+	  the programmers
 
 	- share the responsibility of interface design
 
-The design goals of CGI::FastTemplate were:
+CGI::FastTemplate has the following attributes:
 
-Speed
+       Speed
 
-	FastTemplate doesn't use eval, and parses with a single
-	regular expression.  It just does simple variable interpolation
-	(i.e. there is no logic that you can add to templates - you keep
-	the logic in the code).  That's why it's has 'Fast' in it's name!
+       FastTemplate doesn't use eval, and parses with a single
+       regular expression.  It just does simple variable
+       interpolation (i.e. there is no logic that you can add to
+       templates - you keep the logic in the code).  That's why
+       it's has 'Fast' in it's name!
 
-Efficiency
+       Efficiency
 
-	FastTemplate functions accept and return references whenever
-	possible, which saves needless copying of arguments (hashes,
-	scalars, etc).
+       FastTemplate functions accept and return references
+       whenever possible, which saves needless copying of
+       arguments (hashes, scalars, etc).
 
-Flexibility
+       Flexibility
 
-	The API is robust and flexible, and allows you to build very
-	complex HTML documents/interfaces.  It is also completely written 
-	in perl and works on Unix and NT.  You could use it to build any type
-	of ascii based document (e.g. postscript, xml, email) not just HTML.
+       The API is robust and flexible, and allows you to build
+       very complex HTML documents or HTML interfaces.  It is
+       100% perl and works on Unix or NT.  Also, it isn't
+       restricted to building HTML documents -- it could be used
+       to build any ascii based document (e.g. postscript, XML,
+       email).
+
 
 For more information see the pod documentation included in the file
 'FastTemplate.pm'.
@@ -76,7 +80,7 @@ the following to your code:
 
 	BEGIN
 	{
-		unshift(@INC, "/wherever/you/put/CGI/FastTemplate.pm");
+		unshift(@INC, "/wherever/you/put/CGI-FastTemplate/");
 	}
 
 	use CGI::FastTemplate;
@@ -109,6 +113,21 @@ CHANGES
 -------
 
 Revision history for Perl extension CGI::FastTemplate.
+
+1.09 Sun Jun 27 23:40:14 EDT 1999
+
+    - object is now uses array ref, not a hash ref to store attributes
+    Thanks to: Greg Bacon from his talk "Building Objects out of Arrays" at YAPC
+    note: the API is the same -- this is a behind-the-scenes implementation change.
+
+	- minor pod doco edits
+	- added test scripts and 2 test templates
+
+1.08 Sun Jan 24 23:14:03 EST 1999
+
+	- minor pod doco edits
+	- added GNU copyright
+	- 'Changes' file no longer in distribution. See: 'README'
 
 1.07  Sun Jan 24 23:14:03 EST 1999
 
@@ -173,4 +192,6 @@ Revision history for Perl extension CGI::FastTemplate.
 1.00  Thu Aug 20 11:59:22 1998
 	- original version; created by h2xs 1.18
 	- first public release (rewrite)
+
+
 
