@@ -1,8 +1,14 @@
 Revision history for Perl extension CGI::FastTemplate.
 
-1.00  Thu Aug 20 11:59:22 1998
-	- original version; created by h2xs 1.18
-	- first public release (rewrite)
+1.02  Tue Sep 22 08:57:29 EDT 1998
+
+	- fixed bug that allowed first character after '$' to be a digit.
+	Variables are now: $[A-Z][A-Z0-9_]+
+	Thanks to: Benjamin Low <b.d.low@unsw.edu.au>
+	
+	- add strict() no_strict() which turns on/off complaints to STDERR
+	when a variable is found but no value found for it.
+
 
 1.01  Tue Sep 15 10:01:44 EDT 1998
 
@@ -17,4 +23,10 @@ Revision history for Perl extension CGI::FastTemplate.
 	- added method define_nofile() (alias: define_raw) which allows
 	you to define a template without having to create a separate file
 	for your template.
+
+
+1.00  Thu Aug 20 11:59:22 1998
+	- original version; created by h2xs 1.18
+	- first public release (rewrite)
+
 

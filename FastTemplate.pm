@@ -39,7 +39,7 @@ package CGI::FastTemplate;
 
 use strict;
 
-$CGI::FastTemplate::VERSION	= '1.01';
+$CGI::FastTemplate::VERSION	= '1.02';
 $CGI::FastTemplate::ROOT	= undef; 
 
 ##################################################
@@ -55,6 +55,8 @@ sub new
 
 	$self->init;
 
+	$self->{strict}	= 1;
+
 	if (defined($root))
 	{
 		$self->set_root($root);
@@ -62,6 +64,23 @@ sub new
 	return($self);
 }
 
+##################################################
+##
+sub strict
+##
+{
+	my($self) = shift;
+	$self->{strict} = 1;
+}
+
+##################################################
+##
+sub no_strict
+##
+{
+	my($self) = shift;
+	undef $self->{strict};
+}
 
 ##################################################
 ##
@@ -300,16 +319,12 @@ sub parse
 	
 			## parse
 
-			$temp_parse =~ s/\$([A-Z0-9][A-Z0-9_]+)/
+			$temp_parse =~ s/\$([A-Z][A-Z0-9_]+)/
 
 				my $v = $self->{namespace}{$1};
 
 				if (!defined($v))
 				{
-								## this prevents $v from remaining
-								## undefined which causes spurious
-								## warnings under -w
-					$v = "";
 					## look in array of hash refs for value of variable
 					my $r;					
 					for $r (@{$self->{namespaces}})
@@ -321,6 +336,12 @@ sub parse
 						}
 					}
 				}
+				if (!defined($v))		## $v should be empty not undef, to prevent
+				{				## warnings under -w
+					print STDERR "[CGI::FastTemplate] Warning: no value found for variable: $1\n" 
+						if ($self->{strict});
+					$v = "";
+				}	
 				$v;
 				/ge;
 
@@ -713,6 +734,28 @@ The append style is a bit of a kludge, but it allows you to append the parsed re
 This is most useful when building tables that have an dynamic number of rows - such as data from a database
 query.
 
+=head2 strict()
+
+When strict() is on (it is on by default) all variables found during template parsing that are unresolved
+have a warning printed to STDERR.  e.g. 
+
+	[CGI::FastTemplate] Warning: no value found for variable: SOME_VARIABLE
+
+Note: STDERR output should be captured and logged by the webserver.  e.g. With apache you can tail the error log 
+during development to see the results. e.g. 
+
+	tail -f /etc/httpd/logs/error_log
+
+=head2 no_strict()
+
+Turns off warning messages about unresolved template variables.  This must be set for each instance of CGI::FastTemplate. e.g.
+
+	CGI::FastTemplate->no_strict;		## no 
+	
+	my $tpl = CGI::FastTemplate;
+	$tpl->no_strict;			## yes
+ 
+
 
 =head2 print(SCALAR)
 
@@ -816,7 +859,8 @@ characters after your variable, FastTemplate will consider them to be part of th
 way that you can indicate the end of your variable name is to have a character that is not an uppercase 
 letter, digit or underscore.  ['A-Z0-9_']
 
-If a variable cannot be resolved to anything, it is converted to an empty string [""].
+If a variable cannot be resolved to anything, it is converted to an empty string [""].  
+Also, a warning is printed to STDERR.  See L<strict()> and L<no_strict()> for more info.
 
 Some examples will make this clearer.
 

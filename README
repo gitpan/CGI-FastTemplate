@@ -1,5 +1,5 @@
 
-README for the Perl Module CGI::FastTemplate - 1.01
+README for the Perl Module CGI::FastTemplate - 1.02
 
 	Copyright (c) 1998 Jason Moore <jmoore@sober.com>.  All rights
 	reserved.
@@ -108,9 +108,15 @@ Feel free to send along any comments, suggestions, or bug reports.
 CHANGES
 -------
 
-1.00  Thu Aug 20 11:59:22 1998
-	- original version; created by h2xs 1.18
-	- first public release (rewrite)
+1.02  Tue Sep 22 08:57:29 EDT 1998
+
+	- fixed bug that allowed first character after '$' to be a digit.
+	Variables are now: $[A-Z][A-Z0-9_]+
+	Thanks to: Benjamin Low <b.d.low@unsw.edu.au>
+	
+	- add strict() no_strict() which turns on/off complaints to STDERR
+	when a variable is found but no value found for it.
+
 
 1.01  Tue Sep 15 10:01:44 EDT 1998
 
@@ -126,4 +132,7 @@ CHANGES
 	you to define a template without having to create a separate file
 	for your template.
 
+1.00  Thu Aug 20 11:59:22 1998
+	- original version; created by h2xs 1.18
+	- first public release (rewrite)
 
