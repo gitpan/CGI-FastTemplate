@@ -28,13 +28,18 @@
 ## History:
 ##        See 'Changes'
 ##
+##
+## TODO:
+##     - update 'Changes' 
+##     - update pod doco
+## 
 ##################################################
 
 package CGI::FastTemplate;
 
 use strict;
 
-$CGI::FastTemplate::VERSION	= '1.00';
+$CGI::FastTemplate::VERSION	= '1.01';
 $CGI::FastTemplate::ROOT	= undef; 
 
 ##################################################
@@ -138,11 +143,21 @@ sub clear_href
 sub clear_parse
 ##
 ##   - clears hash which holds parsed variables
+##   - if called with a scalar, only clears that key/element in the namespace.
+##     so, $tpl->clear("ROWS") which is almost the same as,
+##     $tpl->assign(ROWS => "");
 ##
 {
-	my($self) = shift;
-	$self->{namespace}	= {};		## main hash where we resolve variables 
-	$self->{last_parse}	= undef;	## remember where we stored the last parse so print()
+	my($self, $key) = @_;
+	if (!defined($key) || $key eq "")
+	{ 
+		$self->{namespace}	= {};		## main hash where we resolve variables 
+		$self->{last_parse}	= undef;	## remember where we stored the last parse so print()
+		return(1);
+	}
+
+	delete(${$self->{namespace}}{$key});
+	return(1);	
 }
 
 *clear = \&clear_parse;				## alias clear -> clear_parse 
@@ -291,6 +306,10 @@ sub parse
 
 				if (!defined($v))
 				{
+								## this prevents $v from remaining
+								## undefined which causes spurious
+								## warnings under -w
+					$v = "";
 					## look in array of hash refs for value of variable
 					my $r;					
 					for $r (@{$self->{namespaces}})
@@ -368,6 +387,52 @@ sub slurp
 
 	return($temp);
 }
+
+
+##################################################
+##
+sub define_nofile
+##
+## - allows caller to bypass storing templates in files and
+##   using define() to map aliased to the file
+##
+## 1: hash (or hash ref) {template name => raw template data} 
+##        e.g. $raw_tpl = 'Hello $NAME.';
+##
+##	define_nofile(greeting	=> $raw_tpl);
+##
+## Note: single ticks (literal) in the above example are required when
+##       constructing templates to prevent the variables from being 
+##       evalualted/interpolated _before_ being passed into the templating
+##       module. 
+##
+## returns: 1 on success, undef on failure
+##
+{
+	my($self) = shift;
+
+	my $href;
+
+	if (ref($_[0]) eq "HASH")
+	{
+		$href = $_[0]; 			
+	}
+	else
+	{
+		my %h = @_;
+		$href = \%h;	
+	}
+	
+	my $k;
+	for $k (keys(%$href))
+	{
+		$self->{template_name}{$k} = 1;			## exists will now be true (loading skipped)
+		$self->{template_data}{$k} = $$href{$k};	## 
+	}
+	return(1);
+}
+
+*define_raw = \&define_nofile;
 
 ##################################################
 ##
@@ -540,8 +605,40 @@ step when you are dealing with a trivial example like the one above,
 but when you are dealing with dozens of templates, it is very handy to
 refer to templates with names that are indepandant of filenames.)
 
-TIP: Since define() does not actually load the templates, it is simpler to define all the templates 
+TIP: Since define() does not actually load the templates, it is faster and more legible to define all the templates 
 with one call to define().
+
+=head2 define_nofile(HASH)   alias: define_raw(HASH)
+
+Sometimes it is desireable to not have to create a separate template file
+for each template (though in the long run it is usually better to do so).
+The method define_nofile() allows you to do this.  For example, if you
+were writing a news tool where you wanted to bold an item if it was
+"new" you could do something like the following:
+
+    my $tpl = new FastTemplate();
+
+    $tpl->define_nofile(	new	=> '<b>$ITEM_NAME</b> <BR>',
+                 		old	=> '$ITEM_NAME <BR>');
+
+    if ($new)
+    {
+	$tpl->parse($ITEM	=> "new");
+    }
+    else
+    {
+	$tpl->parse($ITEM	=> "old");
+    }
+
+Of course, now you, the programmer has to update how new items are displayed, whereas if it was in a template, you
+could offload that task to someone else.
+
+
+=head2 define_nofile(HASH REF)	alias: define_raw(HASH REF)
+
+A more efficient way of passing your arguments than using a real hash.  Just pass in a hash reference
+instead of a real hash. 
+
 
 =head2 assign(HASH) 
 

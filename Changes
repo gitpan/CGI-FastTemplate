@@ -4,3 +4,17 @@ Revision history for Perl extension CGI::FastTemplate.
 	- original version; created by h2xs 1.18
 	- first public release (rewrite)
 
+1.01  Tue Sep 15 10:01:44 EDT 1998
+
+	- added clear(SCALAR) which clears the scalar from the parsed
+	hash. i.e. 
+		$tpl->clear("FOO");	## equivalent to:
+		$tpl->assign(FOO=>"");
+	
+	- made $v='' not undef in parse() to avoid spurious warnings
+	Thanks to: Benjamin Low <b.d.low@unsw.edu.au>
+
+	- added method define_nofile() (alias: define_raw) which allows
+	you to define a template without having to create a separate file
+	for your template.
+
