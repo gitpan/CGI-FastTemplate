@@ -1,0 +1,117 @@
+
+README for the Perl Module CGI::FastTemplate - 1.00
+
+	Copyright (c) 1998 Jason Moore <jmoore@sober.com>.  All rights
+	reserved.
+
+	This program is free software; you can redistribute it and/or
+	modify it under the same terms as Perl itself.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	Artistic License for more details.
+
+
+DESCRIPTION
+-----------
+
+CGI::FastTemplate manages templates and parses templates replacing
+variable names with values.  It was designed for mid to large scale web
+applications (CGI, mod_perl) where there are great benefits to separating
+the logic of an application from the specific implementation details.
+
+For example using FastTemplate it is possible to:
+
+	- build multilingual applications
+
+	- allow users to select high-bandwidth or text-only versions of
+	an application
+
+	- let graphic designers work on templates independantly of
+	the programmers
+
+	- share the responsibility of interface design
+
+The design goals of CGI::FastTemplate were:
+
+Speed
+
+	FastTemplate doesn't use eval, and parses with a single
+	regular expression.  It just does simple variable interpolation
+	(i.e. there is no logic that you can add to templates - you keep
+	the logic in the code).  That's why it's has 'Fast' in it's name!
+
+Efficiency
+
+	FastTemplate functions accept and return references whenever
+	possible, which saves needless copying of arguments (hashes,
+	scalars, etc).
+
+Flexibility
+
+	The API is robust and flexible, and allows you to build very
+	complex HTML documents/interfaces.  It is also completely written 
+	in perl and works on Unix and NT.  You could use it to build any type
+	of ascii based document (e.g. postscript, xml, email) not just HTML.
+
+For more information see the pod documentation included in the file
+'FastTemplate.pm'.
+
+
+INSTALLATION
+------------
+
+To install, unzip and untar the archive. In the directory created type:
+
+	perl Makefile.PL
+	make
+	make install
+
+Note: If this does not work, you can always just copy the file
+'FastTemplate.pm' to the 'CGI' directory in your perl distribution.
+
+If you want to test out the module without installing it, you can add
+the following to your code:
+
+	BEGIN
+	{
+		unshift(@INC, "/wherever/you/put/CGI/FastTemplate.pm");
+	}
+
+	use CGI::FastTemplate;
+
+
+DOCUMENTATION
+-------------
+
+Documentation is included in the module in pod format.  Once
+CGI::FastTemplate has been installed type:
+
+	perldoc CGI::FastTemplate
+
+or if is uninstalled:
+
+	perldoc ./FastTemplate.pm
+
+For more information on perldoc type 'perldoc perldoc'.
+
+
+AUTHOR
+------
+
+Jason Moore <jmoore@sober.com>
+
+Feel free to send along any comments, suggestions, or bug reports.
+
+
+CHANGES
+-------
+
+1.00	- initial rewrite
+
+
+
+
+
+

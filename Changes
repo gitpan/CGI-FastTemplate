@@ -1,0 +1,6 @@
+Revision history for Perl extension CGI::FastTemplate.
+
+1.00  Thu Aug 20 11:59:22 1998
+	- original version; created by h2xs 1.18
+	- first public release (rewrite)
+
