@@ -18,6 +18,9 @@
 ## Credits:
 ##        - fancy regexp taken from article by Brian Slesinsky <bslesins@best.com>
 ##        http://www.hotwired.com/webmonkey/code/97/21/index2a_page4.html?tw=perl
+##
+##        - modified regexp to support ${VAR} and $VAR styles suggested by Eric L. Brine 
+##          <q2ir@unb.ca> 
 ## 
 ## Documentation:
 ##        See 
@@ -37,7 +40,7 @@ package CGI::FastTemplate;
 
 use strict;
 
-$CGI::FastTemplate::VERSION	= '1.04';
+$CGI::FastTemplate::VERSION	= '1.07';
 $CGI::FastTemplate::ROOT	= undef; 
 
 ##################################################
@@ -122,10 +125,26 @@ sub clear_define
 sub clear_tpl
 ##
 ##   - clears hash that holds loaded templates. 
+##   - if passed an array of names, clears only those loaded templates
 ##
 {
 	my($self) = shift;
-	$self->{template_data}	= {};
+	my @args = @_;
+
+	if (@args == 0)			## clear entire cache
+	{
+		$self->{template_data}	= {};
+		return(1);
+	}
+
+	## clear just a selection of entries
+
+	for (@args)
+	{
+		delete( ${$self->{template_data}}{$_} );
+	} 
+
+	return(1);
 }
 
 
@@ -155,26 +174,36 @@ sub clear_href
 	return(1);
 }
 
-##################################################
+#################################################
 ##
 sub clear_parse
 ##
 ##   - clears hash which holds parsed variables
-##   - if called with a scalar, only clears that key/element in the namespace.
+##   - if called with a scalar only clears that key/element in the namespace.
 ##     so, $tpl->clear("ROWS") which is almost the same as,
 ##     $tpl->assign(ROWS => "");
 ##
+##   - if called with an array, all keys in the array are deleted
+##     e.g. $tpl->clear("ROWS", "COLS"); has the same effect as 
+##          $tpl->assign(ROWS => "",
+##                       COLS => "");
+##     
+##
 {
-	my($self, $key) = @_;
-	if (!defined($key) || $key eq "")
-	{ 
-		$self->{namespace}	= {};		## main hash where we resolve variables 
-		$self->{last_parse}	= undef;	## remember where we stored the last parse so print()
-		return(1);
-	}
+        my $self = shift; 
 
-	delete(${$self->{namespace}}{$key});
-	return(1);	
+        if (@_ == 0)                                    ## clear everything
+        { 
+                $self->{namespace}      = {};           ## main hash where we resolve variables 
+                $self->{last_parse}     = undef;        ## remember where we stored the last parse so print()
+                return(1);
+        }
+                        
+        for (@_)        
+        {       
+                delete(${$self->{namespace}}{$_});
+        }
+        return(1);
 }
 
 *clear = \&clear_parse;				## alias clear -> clear_parse 
@@ -314,12 +343,14 @@ sub parse
 			## (can't use namespace, since we might be appending to it.)
 		
 			my $temp_parse = $self->{template_data}{$p};
-	
-			## parse
 
-			$temp_parse =~ s/\$([A-Z][A-Z0-9_]+)/
+			#########	
+			## parse 
+			#########
 
-				my $v = $self->{namespace}{$1};
+			$temp_parse =~ s/\$(?:([A-Z][A-Z0-9_]+)|{([A-Z][A-Z0-9_]+)})/	
+
+				my $v = $self->{namespace}{$+};
 
 				if (!defined($v))
 				{
@@ -327,9 +358,9 @@ sub parse
 					my $r;					
 					for $r (@{$self->{namespaces}})
 					{
-						if (exists($$r{$1}))	## found it
+						if (exists($$r{$+}))	## found it
 						{
-							$v = $$r{$1};
+							$v = $$r{$+};
 							last;
 						}
 					}
@@ -338,8 +369,8 @@ sub parse
 				{				## warnings under -w
 					if ($self->{"strict"})
 					{
-						print STDERR "[CGI::FastTemplate] Warning: no value found for variable: $1\n";
-						$v = '$' . $1;		## keep original variable name in output
+						print STDERR "[CGI::FastTemplate] Warning: no value found for variable: $+\n";
+						$v = '$' . $+;		## keep original variable name in output
 					}
 					else
 					{
@@ -753,6 +784,11 @@ If you have been using an earlier version of FastTemplate and you want
 the old behavior of replacing unknown variables with an empty string,
 see: no_strict().
 
+Note: version 1.07 adds support for two styles of variables, so that the following are equivalent: $VAR and ${VAR}
+However, when using strict(), variables with curly brackets that are not resolved are outputted as plain variables. 
+e.g. if ${VAR} has no value assigned to it, it would appear in the output as $VAR.  This is a slight inconsistency --
+ideally the unresolved variable would remain unchanged. 
+
 Note: STDERR output should be captured and logged by the webserver.
 e.g. With apache (and unix!) you can tail the error log during development
 to see the results. e.g.
@@ -825,7 +861,18 @@ Removes a given number of hash references from the list of hash refs that is bui
     $tpl->assign(HASH REF);
 
 If called with no arguments, it removes all hash references
-from the array.
+from the array.  This is often used for database queries where each row from the query
+is a hash or hash reference.
+
+e.g.
+    
+    while($hash_row = $sth->fetchrow_hashref)
+    {
+        $tpl->assign($hash_row);
+        $tpl->parse(ROW => ".row");
+        $tpl->clear_href(1);
+    }
+
 
 
 =head2 clear_define()
@@ -837,11 +884,13 @@ Clears the internal hash that stores data passed to:
 Note: The hash that holds the loaded templates is not touched with this method.  See: clear_tpl
 
 
-=head2 clear_tpl()
+=head2 clear_tpl() clear_tpl(NAME)
 
-Clears the internal hash that stores the contents of the templates.  If you are
-having problems with template changes not being reflected, try adding this 
-method to your script.
+The first time a template is used, it is loaded and stored in a hash in memory.  clear_tpl() removes all
+the templates being held in memory.  clear_tpl(NAME) only removes the one with NAME.  This is generally not required
+for normal CGI programming, but if you have long running scripts (e.g. mod_perl) and have very large templates that a
+re infrequently used gives you some control over how memory is being used.
+
 
 =head2 clear_all()
 
@@ -858,25 +907,35 @@ A variable is defined as:
 
     $[A-Z0-9][A-Z0-9_]+
 
+
 This means, that a variable must begin with a dollar sign '$'.  The second character
 must be an uppercase letter or digit 'A-Z0-9'.  Remaining characters can include an underscore.
+
+As of version 1.07 variables can also be delimited by curly brackets.
+
+    ${[A-Z0-9][A-Z0-9_]+}
 
 For example, the following are valid variables:
 
     $FOO
     $F123F
     $TOP_OF_PAGE
+    ${NEW_STYLE}
 
 =head2 Variable Interpolation (Template Parsing)
 
 When the a template is being scanned for variables, pattern matching is greedy. (For more info on
 "greediness" of regexps see L<perlre>.)  This is important, because if there are valid variable
-characters after your variable, FastTemplate will consider them to be part of the variable.  The only
-way that you can indicate the end of your variable name is to have a character that is not an uppercase 
+characters after your variable, FastTemplate will consider them to be part of the variable.  As of version 1.07
+you can use curly brackets as delimiters for your variable names.  e.g. ${VARIABLE}  You do not need
+to use curly brackets if the character immediately after your variable name is not an uppercase 
 letter, digit or underscore.  ['A-Z0-9_']
 
-If a variable cannot be resolved to anything, it is converted to an empty string [""].  
-Also, a warning is printed to STDERR.  See L<strict()> and L<no_strict()> for more info.
+If a variable cannot be resolved to a value then there are two possibilities.  If strict() has been called (it is 
+on by default) then the variable remains and a warning is printed to STDERR.   If no_strict() has been called then
+the variables is converted to an empty string [""].
+
+See L<strict()> and L<no_strict()> for more info.
 
 Some examples will make this clearer.
 
@@ -888,14 +947,15 @@ Some examples will make this clearer.
     $TWO = "2";	
     $UND = "_";
 	
-    Variable	Interpolated/Parsed
+    Variable        Interpolated/Parsed
     ------------------------------------------------
-    $FOO		foo	
-    $FOO-$BAR	foo-bar
-    $ONE_$TWO	_2			## $ONE_ is undefined!	
-    $ONE$UND$TWO	1_2
-    $$FOO		$foo
-    $25,000		$25,000
+    $FOO            foo	
+    $FOO-$BAR       foo-bar
+    $ONE_$TWO       _2                ## $ONE_ is undefined!	
+    $ONE$UND$TWO    1_2               ## kludge!
+    ${ONE}_$TWO     1_2               ## much better
+    $$FOO           $foo
+    $25,000         $25,000
 
 
 

@@ -1,5 +1,29 @@
 Revision history for Perl extension CGI::FastTemplate.
 
+1.07  Sun Jan 24 23:14:03 EST 1999
+
+	- edited main regexp to add support for new ${VAR} style variables.
+	Thanks to: Eric L. Brine <q2ir@unb.ca>
+	- minor pod doco edits
+
+
+1.06  Mon Jan  4 13:47:13 EST 1999
+
+	- extended clear_tpl() to allow for a selective clearing of loaded templates.
+	Useful for persistant or long running code where you want to use a large
+	template, but don't want to keep it in memory.
+
+	clear_tpl()         - clears all loaded templates from cache
+	clear_tpl(SCALAR)   - clears only template SCALAR
+	clear_tpl(ARRAY)    - clears templates named in ARRAY
+
+
+1.05  Fri Nov 27 15:27:54 EST 1998
+	- extended clear_parse() (alias: clear()) to handle array as well as
+	a scalar.   e.g. $tpl->clear("ROWS") or $tpl->clear("ROWS", "COLS", "HEAD"); 
+	are valid.
+
+
 1.04  Thu Oct 29 09:57:15 EST 1998
 	- strict() now leaves unknown variables in the final doc instead of
 	converting them to an empty string.  see: no_strict() to get the old 
